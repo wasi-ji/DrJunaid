@@ -1,0 +1,5 @@
+{
+  "name": "Dr. Junaid Sawer Arain - Orthopedic Surgeon",
+  "description": "Professional website for Dr. Junaid Sawer Arain, featuring AI-powered symptom checking, appointment booking, and trust-centered orthopedic care in Karachi.",
+  "requestFramePermissions": ["geolocation"]
+}
