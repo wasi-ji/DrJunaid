@@ -5,18 +5,38 @@ import Markdown from 'react-markdown';
 import { getGeminiResponse, SYMPTOM_CHECKER_SYSTEM } from '../lib/gemini';
 import { cn } from '../lib/utils';
 import { DR_INFO } from '../constants';
+import TypingIndicator from './TypingIndicator';
 
 export default function SymptomChecker() {
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<{ role: 'user' | 'ai', content: string }[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingStep, setLoadingStep] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const loadingMessages = [
+    "Analyzing symptoms...",
+    "Consulting medical database...",
+    "Reviewing Dr. Junaid's expertise...",
+    "Generating assessment..."
+  ];
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages]);
+  }, [messages, isLoading]);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isLoading) {
+      setLoadingStep(0);
+      interval = setInterval(() => {
+        setLoadingStep(prev => (prev + 1) % loadingMessages.length);
+      }, 2000);
+    }
+    return () => clearInterval(interval);
+  }, [isLoading]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -106,12 +126,25 @@ export default function SymptomChecker() {
             </AnimatePresence>
 
             {isLoading && (
-              <div className="flex items-center gap-2 text-slate-400 text-sm italic">
-                <Loader2 size={16} className="animate-spin" />
-                Analyzing symptoms...
-              </div>
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex flex-col items-start max-w-[85%]"
+              >
+                <div className="bg-white text-slate-700 border border-slate-200 p-4 rounded-2xl rounded-tl-none shadow-sm flex flex-col gap-2 min-w-[120px]">
+                  <TypingIndicator />
+                  <div className="flex items-center gap-2 text-slate-400 text-xs italic">
+                    <Loader2 size={12} className="animate-spin" />
+                    {loadingMessages[loadingStep]}
+                  </div>
+                </div>
+                <span className="text-[10px] text-slate-400 mt-1 font-medium uppercase">
+                  AI Assistant
+                </span>
+              </motion.div>
             )}
           </div>
+
 
           {/* Input Area */}
           <div className="p-4 bg-white border-t border-slate-100">

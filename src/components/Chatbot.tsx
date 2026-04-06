@@ -5,6 +5,7 @@ import Markdown from 'react-markdown';
 import { getGeminiResponse, RECEPTIONIST_SYSTEM } from '../lib/gemini';
 import { cn } from '../lib/utils';
 import { DR_INFO } from '../constants';
+import TypingIndicator from './TypingIndicator';
 
 interface ChatbotProps {
   onBookClick: () => void;
@@ -17,13 +18,32 @@ export default function Chatbot({ onBookClick }: ChatbotProps) {
     { role: 'ai', content: "Hello! I'm Ayesha, Dr. Junaid's virtual assistant. How can I help you today?" }
   ]);
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingStep, setLoadingStep] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const loadingMessages = [
+    "Thinking...",
+    "Checking schedule...",
+    "Finding information...",
+    "Typing..."
+  ];
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages, isOpen]);
+  }, [messages, isOpen, isLoading]);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isLoading) {
+      setLoadingStep(0);
+      interval = setInterval(() => {
+        setLoadingStep(prev => (prev + 1) % loadingMessages.length);
+      }, 1500);
+    }
+    return () => clearInterval(interval);
+  }, [isLoading]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -138,12 +158,17 @@ export default function Chatbot({ onBookClick }: ChatbotProps) {
                   <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
                     <Bot size={16} />
                   </div>
-                  <div className="bg-white p-3 rounded-2xl rounded-tl-none border border-slate-100 shadow-sm">
-                    <Loader2 size={16} className="animate-spin text-blue-600" />
+                  <div className="bg-white p-3 rounded-2xl rounded-tl-none border border-slate-100 shadow-sm flex flex-col gap-1">
+                    <TypingIndicator />
+                    <div className="flex items-center gap-1.5 text-[10px] text-slate-400 italic px-1">
+                      <Loader2 size={10} className="animate-spin" />
+                      {loadingMessages[loadingStep]}
+                    </div>
                   </div>
                 </div>
               )}
             </div>
+
 
             {/* Input */}
             <form onSubmit={handleSubmit} className="p-4 bg-white border-t border-slate-100 flex gap-2">
